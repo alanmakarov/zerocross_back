@@ -1,0 +1,38 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build with make",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher":[],
+            "detail": "Build the go project fro multiple platform"
+        },
+        {
+            "label": "build release",
+            "type": "shell",
+            "command":"go",
+            "args": [
+                "build",
+                "-o","./my_test_app_release",
+                "./"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher":[],
+            "detail": "Build go project for release"
+        }
+
+    ]
+}
