@@ -18,6 +18,20 @@
             "detail": "Build the go project fro multiple platform"
         },
         {
+            "label": "clean with make",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher":[],
+            "detail": "clean the go project fro multiple platform"
+        },
+        {
             "label": "build release",
             "type": "shell",
             "command":"go",
