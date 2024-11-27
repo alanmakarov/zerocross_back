@@ -13,6 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 )
 
 func main() {
@@ -35,6 +36,8 @@ func main() {
 	// Создаем новое приложение Fiber
 	app := fiber.New()
 
+	// Добавляем профайлер
+	app.Use(pprof.New())
 	// Логирование запросов
 	app.Use(logger.New())
 	app.Use(cors.New())
