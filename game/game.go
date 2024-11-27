@@ -4,6 +4,7 @@ import (
 	"fiber_api_v1/models"
 	"fmt"
 	"math/rand"
+	"sync"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,7 +24,10 @@ type GamePlay struct {
 	Game
 }
 
-var games map[int]GamePlay = make(map[int]GamePlay)
+var (
+	gameMutex sync.Mutex
+	games     map[int]GamePlay = make(map[int]GamePlay)
+)
 
 func (b *Board) set(row, col int, marker string) (ok bool) {
 	if b[row][col] != " " {
@@ -124,35 +128,42 @@ func StartHandler(c *fiber.Ctx) error {
 	}
 	response.Symbol = curgame.Symbol
 	response.Board = curgame.Board
+
+	gameMutex.Lock()
+	defer gameMutex.Unlock()
+
 	games[id] = curgame
-	//}
 
 	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func GameStepHandler(c *fiber.Ctx) error {
-	id := c.Locals("user_id").(int)
 
 	var request models.GameStepRequest
-	var response models.GameStepResponse
-	var curgame GamePlay
 
-	if val, ok := games[id]; ok {
-		curgame = val
-	} else {
-		return c.Status(fiber.StatusNotAcceptable).JSON(fiber.Map{"error": "No Game started, call /start first"})
-	}
+	// проверка на валидность запроса и правильность пришедших параметров
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-
 	if request.Col > 3 || request.Row > 3 || request.Col < 0 || request.Row < 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "row and col indexes shoul be more than 0 and less 3"})
 	}
+
+	id := c.Locals("user_id").(int)
+	var response models.GameStepResponse
+	var curgame GamePlay
+
+	gameMutex.Lock()
+	curgame, ok := games[id]
+	gameMutex.Unlock()
+
+	if !ok {
+		return c.Status(fiber.StatusNotAcceptable).JSON(fiber.Map{"error": "No Game started, call /start first"})
+	}
+
 	if curgame.Board[request.Row][request.Col] != " " {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": fmt.Sprintf("position row:%d col:%d is taken please choose another ", request.Row, request.Col)})
 	} else {
-		curgame := games[id]
 		var winner string
 		var isover bool
 
@@ -167,7 +178,9 @@ func GameStepHandler(c *fiber.Ctx) error {
 		response.WinnerName = winner
 		response.Board = curgame.Board
 		response.IsBotWinner = curgame.IsBotWinner()
+		gameMutex.Lock()
 		games[id] = curgame
+		gameMutex.Unlock()
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)
